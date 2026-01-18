@@ -28,15 +28,7 @@ pip install -r requirements.txt
 
 ------------------------------------------------------------
 
-ComfyUI/custom_nodes/HeartMuLa_ComfyUI/
-├── __init__.py                <-- The code provided below
-├── util/                      <-- Create this folder
-│   └── heartlib/              <-- Paste the heartlib SOURCE CODE here
-│       ├── __init__.py
-│       ├── pipelines.py
-│       ├── models.py
-│       └── ... (other python files)
-└── requirements.txt           (Optional: torch, transformers, torchaudio, etc.)
+<img width="1179" height="345" alt="image" src="https://github.com/user-attachments/assets/5087e10e-9815-48ff-bbb4-3a21dc1e54d1" />
 
 
 ------------------------------------------------------------
@@ -64,14 +56,10 @@ hf download --local-dir './HeartMuLa/HeartTranscriptor-oss' 'HeartMuLa/HeartTran
 # For Model File structure
 
 ------------------------------------------------------------
-ComfyUI/
-└── models/
-    └── HeartMuLa/
-        ├── gen_config.json
-        ├── tokenizer.json
-        ├── HeartCodec-oss/
-        ├── HeartMuLa-oss-3B/
-        └── HeartMuLa-oss-7B/ (Jan 2026 not release yet, will update this node once 7B publish.)
+
+
+<img width="1391" height="320" alt="image" src="https://github.com/user-attachments/assets/3b48ff70-2a4f-4f8d-aed2-d0fbc76bb31f" />
+
 
 
 ------------------------------------------------------------
