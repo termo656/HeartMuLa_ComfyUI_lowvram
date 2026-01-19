@@ -106,16 +106,5 @@ HeartMuLa: https://huggingface.co/HeartMuLa/HeartMuLa-oss-3B
 
 
 
-⚖️ License & Ethics Statement
-------------------------------------------------------------
-(Same as the official Model page.)
-
-This repository is licensed under the Creative Commons Attribution–NonCommercial 4.0 International License (CC BY-NC 4.0).
-
-🔒 For non-commercial research and educational use only
-
-🚫 Any commercial use is strictly prohibited
-
-⚠️ Users are solely responsible for ensuring that generated content does not infringe any third-party copyrights
 
 
