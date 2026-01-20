@@ -118,6 +118,9 @@ class HeartMuLa(PreTrainedModel):
 
     def setup_caches(self, max_batch_size: int):
         dtype = next(self.parameters()).dtype
+        if dtype not in [torch.float16, torch.bfloat16, torch.float32]:
+            dtype = torch.float16
+
         device = next(self.parameters()).device
         try:
             self.reset_caches()

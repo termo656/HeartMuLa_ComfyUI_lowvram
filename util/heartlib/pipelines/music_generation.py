@@ -221,7 +221,7 @@ class HeartMuLaGenPipeline(Pipeline):
             heartcodec = HeartCodec.from_pretrained(heartcodec_path, device_map=device)
         else:
             raise FileNotFoundError(
-                f"Expected to find checkpoint for HeartCodec at {heartcodec_path} but not found. Please check your folder {pretrained_path}."
+                f"尝试在你的这个目录下去寻找模型 {heartcodec_path} 但未找到。请检查你的文件夹是否存在这个目录： {pretrained_path}."
             )
 
         if os.path.exists(
@@ -232,7 +232,7 @@ class HeartMuLaGenPipeline(Pipeline):
             )
         else:
             raise FileNotFoundError(
-                f"Expected to find checkpoint for HeartMuLa at {heartmula_path} but not found. Please check your folder {pretrained_path}."
+                f"期望在 {heartmula_path} 找到 HeartMuLa 检查点但未找到。请检查您的文件夹 {pretrained_path}。"
             )
 
         if os.path.isfile(
@@ -241,7 +241,7 @@ class HeartMuLaGenPipeline(Pipeline):
             tokenizer = Tokenizer.from_file(vocab_path)
         else:
             raise FileNotFoundError(
-                f"Expected to find tokenizer.json for HeartMuLa at {vocab_path} but not found. Please check your folder {pretrained_path}."
+                f"期望在 {vocab_path} 找到 HeartMuLa 的 tokenizer.json 但未找到。请检查您的文件夹 {pretrained_path}。"
             )
 
         if os.path.isfile(
@@ -250,7 +250,7 @@ class HeartMuLaGenPipeline(Pipeline):
             gen_config = HeartMuLaGenConfig.from_file(gen_config_path)
         else:
             raise FileNotFoundError(
-                f"Expected to find gen_config.json for HeartMuLa at {gen_config_path} but not found. Please check your folder {pretrained_path}."
+                f"期望在 {gen_config_path} 找到 HeartMuLa 的 gen_config.json 但未找到。请检查您的文件夹 {pretrained_path}。"
             )
 
         return cls(heartmula, heartcodec, None, tokenizer, gen_config, device, dtype)

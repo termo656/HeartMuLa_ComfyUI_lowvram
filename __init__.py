@@ -4,11 +4,11 @@ import torch
 import torchaudio
 import numpy as np
 import uuid
-import gc  # Import gc for garbage collection
+import gc  # 引入 gc 进行垃圾回收
 import folder_paths
-
+from transformers import BitsAndBytesConfig
 # ----------------------------
-# Add Local HeartLib to Path
+# 添加本地 HeartLib 到路径
 # ----------------------------
 current_dir = os.path.dirname(os.path.abspath(__file__))
 util_dir = os.path.join(current_dir, "util")
@@ -16,12 +16,12 @@ if util_dir not in sys.path:
     sys.path.insert(0, util_dir)
 
 # ----------------------------
-# Path Configuration
+# 路径配置
 # ----------------------------
 MODEL_BASE_DIR = os.path.join(folder_paths.models_dir, "HeartMuLa")
 
 # ----------------------------
-# Global Model Manager
+# 全局模型管理器
 # ----------------------------
 class HeartMuLaModelManager:
     _instance = None
@@ -36,22 +36,32 @@ class HeartMuLaModelManager:
 
     def get_gen_pipeline(self, version="3B"):
         if version not in self._gen_pipes:
-            print(f"[HeartMuLa] Loading Generation Pipeline (Version: {version}) on {self._device}...")
+            print(f"[HeartMuLa] 正在加载生成管线 (版本: {version}) 于 {self._device}...")
             from heartlib import HeartMuLaGenPipeline
+            from transformers import BitsAndBytesConfig
             
+            # 配置 4-bit 量化
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_use_double_quant=True,
+            )
+
             self._gen_pipes[version] = HeartMuLaGenPipeline.from_pretrained(
                 MODEL_BASE_DIR,
                 device=self._device,
-                dtype=torch.bfloat16,
+                dtype=torch.float16,
                 version=version,
+                bnb_config=bnb_config,
             )
-            print(f"[HeartMuLa] Generation Pipeline ({version}) Ready.")
+            print(f"[HeartMuLa] 生成管线 ({version}) 就绪。")
             
         return self._gen_pipes[version]
 
     def get_transcribe_pipeline(self):
         if self._transcribe_pipe is None:
-            print(f"[HeartMuLa] Loading Transcription Pipeline on {self._device}...")
+            print(f"[HeartMuLa] 正在加载转录管线 于 {self._device}...")
             from heartlib import HeartTranscriptorPipeline
             
             self._transcribe_pipe = HeartTranscriptorPipeline.from_pretrained(
@@ -59,12 +69,12 @@ class HeartMuLaModelManager:
                 device=self._device,
                 dtype=torch.float16,
             )
-            print("[HeartMuLa] Transcription Pipeline Ready.")
+            print("[HeartMuLa] 转录管线 就绪。")
             
         return self._transcribe_pipe
 
 # ----------------------------
-# Node: Music Generator
+# 节点: 音乐生成器
 # ----------------------------
 class HeartMuLa_Generate:
     @classmethod
@@ -95,7 +105,7 @@ class HeartMuLa_Generate:
         filename = f"heartmula_gen_{uuid.uuid4().hex}.mp3"
         out_path = os.path.join(output_dir, filename)
 
-        # --- GENERATION ---
+        # --- 生成 ---
         with torch.no_grad():
             pipe(
                 {"lyrics": lyrics, "tags": tags},
@@ -106,25 +116,25 @@ class HeartMuLa_Generate:
                 cfg_scale=cfg_scale,
             )
         
-        # --- MEMORY CLEANUP ---
-        # Clear memory immediately after generation finishes
+        # --- 内存清理 ---
+        # 生成完成后立即清理内存
         torch.cuda.empty_cache()
         gc.collect()
 
-        # Load result back for ComfyUI
+        # 加载结果回 ComfyUI
         waveform, sample_rate = torchaudio.load(out_path)
         
-        print(f"[HeartMuLa Gen] Loaded Shape: {waveform.shape}")
+        print(f"[HeartMuLa Gen] 加载形状: {waveform.shape}")
         if waveform.ndim == 1:
             waveform = waveform.unsqueeze(0) 
         
-        # Explicitly convert to float32
+        # 显式转换为 float32
         waveform = waveform.float()
             
         if waveform.ndim == 2:
             waveform = waveform.unsqueeze(0)
             
-        print(f"[HeartMuLa Gen] Output Shape: {waveform.shape}")
+        print(f"[HeartMuLa Gen] 输出形状: {waveform.shape}")
 
         audio_output = {
             "waveform": waveform,
@@ -134,7 +144,7 @@ class HeartMuLa_Generate:
         return (audio_output, out_path)
 
 # ----------------------------
-# Node: Lyrics Transcriber
+# 节点: 歌词转录器
 # ----------------------------
 class HeartMuLa_Transcribe:
     @classmethod
@@ -219,7 +229,7 @@ class HeartMuLa_Transcribe:
         return (text,)
 
 # ----------------------------
-# Node Mappings
+# 节点映射
 # ----------------------------
 NODE_CLASS_MAPPINGS = {
     "HeartMuLa_Generate": HeartMuLa_Generate,
