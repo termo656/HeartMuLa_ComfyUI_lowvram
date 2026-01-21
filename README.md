@@ -25,33 +25,53 @@ How To Use this In Basic: https://youtu.be/F9LFAeUbBIs
 ------------------------------------------------------------
 
 **Step 1**
+
 To reduce the likelihood of errors, perform a clean installation ComfyUI !!!
+
 https://github.com/Comfy-Org/ComfyUI/releases/download/v0.10.0/ComfyUI_windows_portable_nvidia_cu126.7z
 
+...
+
 Install Comfy Manager, file in ComfyUI folder and run
+
 https://github.com/ltdrdata/ComfyUI-Manager/raw/main/scripts/install-manager-for-portable-version.bat
 
+...
+
 Unzip the node into a folder ComfyUI\custom_nodes\HeartMuLa_ComfyUI
+
 https://github.com/termo656/HeartMuLa_ComfyUI_lowvram/archive/refs/heads/main.zip
+
 **Step 2**
 
 cd /HeartMuLa_ComfyUI
+
 Go to the "python_embeded" folder
+
 Type "cmd" in the address bar
+
 And install it with the command
 
 pip install -r requirements.txt
+
 python.exe -m pip install torchcodec scipy bitsandbytes
 
 **Step 3**
 
 create a bat file to launch run_nvidia_gpu_lowvram.bat
 
+______________________________________________________
+
 @echo off
+
 setlocal
+
 set CUDA_VISIBLE_DEVICES=0
+
 set PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:64
+
 .\python_embeded\python.exe -s ComfyUI\main.py --lowvram --windows-standalone-build
+
 pause
 
 ------------------------------------------------------------
