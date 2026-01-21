@@ -15,11 +15,7 @@ https://github.com/HeartMuLa/heartlib
 How To Use this In Basic: https://youtu.be/F9LFAeUbBIs
 
 
-<img width="1418" height="595" alt="image" src="https://github.com/user-attachments/assets/44f4b065-bfe0-405d-8324-e10f5c60b320" />
-
-
-<img width="1396" height="916" alt="image" src="https://github.com/user-attachments/assets/134a7776-6805-42a8-9e49-5852e8ee3ba9" />
-
+![Uploading Screenshot_3.png…]()
 
 ------------------------------------------------------------
 
