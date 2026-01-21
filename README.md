@@ -3,7 +3,9 @@ Experimental optimization for older 8GB cards (GTX 1070) [4bit,8bit]
 I was able to run it on the old card!
 
 Sometimes style tags don't work, possibly due to model compression.
-CFG_SCALE = 5.0    !!!
+
+# CFG_SCALE = 5.0    !!!
+
 
 # HeartMuLa_ComfyUI
 ComfyUI Custom Node for HeartMuLa AI Music Generation and Transcript Text
