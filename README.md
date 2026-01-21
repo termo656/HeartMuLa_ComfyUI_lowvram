@@ -54,7 +54,7 @@ Type "cmd" in the address bar
 
 And install it with the command
 
-pip install -r requirements.txt
+python.exe -m pip install -r requirements.txt
 
 
 **Step 3**
