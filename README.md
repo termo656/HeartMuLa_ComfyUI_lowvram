@@ -56,7 +56,6 @@ And install it with the command
 
 pip install -r requirements.txt
 
-python.exe -m pip install torchcodec scipy bitsandbytes
 
 **Step 3**
 
