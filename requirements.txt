@@ -9,4 +9,7 @@ sentencepiece>=0.2.0
 accelerate>=1.0.0
 numpy
 protobuf
+torchcodec
 omegaconf
+scipy
+bitsandbytes
