@@ -1,3 +1,10 @@
+Experimental optimization for older 8GB cards (GTX 1070) [4bit,8bit]
+
+I was able to run it on the old card!
+
+Sometimes style tags don't work, possibly due to model compression.
+CFG_SCALE = 5.0    !!!
+
 # HeartMuLa_ComfyUI
 ComfyUI Custom Node for HeartMuLa AI Music Generation and Transcript Text
 
@@ -21,20 +28,33 @@ How To Use this In Basic: https://youtu.be/F9LFAeUbBIs
 ------------------------------------------------------------
 
 **Step 1**
+To reduce the likelihood of errors, perform a clean installation ComfyUI !!!
+https://github.com/Comfy-Org/ComfyUI/releases/download/v0.10.0/ComfyUI_windows_portable_nvidia_cu126.7z
 
-Go to ComfyUI\custom_nodes
-Command prompt:
+Install Comfy Manager, file in ComfyUI folder and run
+https://github.com/ltdrdata/ComfyUI-Manager/raw/main/scripts/install-manager-for-portable-version.bat
 
-git clone https://github.com/benjiyaya/HeartMuLa_ComfyUI
-
+Unzip the node into a folder ComfyUI\custom_nodes\HeartMuLa_ComfyUI
+https://github.com/termo656/HeartMuLa_ComfyUI_lowvram/archive/refs/heads/main.zip
 **Step 2**
 
 cd /HeartMuLa_ComfyUI
-
-**Step 3**
+Go to the "python_embeded" folder
+Type "cmd" in the address bar
+And install it with the command
 
 pip install -r requirements.txt
+python.exe -m pip install torchcodec scipy bitsandbytes
 
+**Step 3**
+create a bat file to launch run_nvidia_gpu_lowvram.bat
+
+@echo off
+setlocal
+set CUDA_VISIBLE_DEVICES=0
+set PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:256
+.\python_embeded\python.exe -s ComfyUI\main.py --lowvram --windows-standalone-build 
+pause
 ------------------------------------------------------------
 
 # For File structure
@@ -57,12 +77,9 @@ type :
 
 hf download HeartMuLa/HeartMuLaGen --local-dir ./HeartMuLa
 
-hf download HeartMuLa/HeartMuLa-oss-3B --local-dir ./HeartMuLa/HeartMuLa-oss-3B
+hf download benjiaiplayground/HeartMuLa-oss-3B-bf16 --local-dir ./HeartMuLa/HeartMuLa-oss-3B
 
-hf download HeartMuLa/HeartCodec-oss --local-dir ./HeartMuLa/HeartCodec-oss
-
-hf download HeartMuLa/HeartTranscriptor-oss --local-dir ./HeartMuLa/HeartTranscriptor-oss
-
+hf download benjiaiplayground/HeartCodec-oss-bf16 --local-dir ./HeartMuLa/HeartCodec-oss
 
 ------------------------------------------------------------
 
@@ -87,11 +104,10 @@ Paper: https://arxiv.org/abs/2601.10547
 
 Demo: https://heartmula.github.io/
 
-HeartMuLa-oss-3B: https://huggingface.co/HeartMuLa/HeartMuLa-oss-3B
+HeartMuLa-oss-3B: https://huggingface.co/benjiaiplayground/HeartMuLa-oss-3B-bf16
 
-HeartCodec-oss: https://huggingface.co/HeartMuLa/HeartCodec-oss
+HeartCodec-oss: https://huggingface.co/benjiaiplayground/HeartCodec-oss-bf16
 
-HeartTranscriptor-oss: https://huggingface.co/HeartMuLa/HeartTranscriptor-oss
 
 
 
