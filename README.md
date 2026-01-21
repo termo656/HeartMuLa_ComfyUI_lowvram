@@ -75,6 +75,13 @@ set PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:64
 pause
 
 ------------------------------------------------------------
+**Step 4**
+
+Download ffmpeg
+
+extract the "bin" folder and install it in the system PATH
+
+https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full-shared.7z
 
 # For File structure
 
