@@ -1,11 +1,10 @@
 
-Experimental optimization for older 8GB cards (GTX 1070) [4bit,8bit]
+<h2><b>Experimental optimization for older 8GB cards (GTX 1070) [4bit,8bit]</b></h2>
 
 Sometimes style tags don't work, maybe because the model is compressed or it doesn't follow style tags well to begin with?!
 
-# default CFG_SCALE = 1.5 
 
-Style tags from the official website:
+<b>Style tags from the official website:</b>
 
 
 warm, reflection, pop, Cafe
@@ -30,7 +29,7 @@ energetic, drums, driving, rock, electric guitar
 
 Cafe, Regret, Keyboard, synthesizer, drum machine, R&B, electric guitar
 
-Song structure:
+<b>Song structure:</b>
 
 [Verse]
 
@@ -46,6 +45,8 @@ Song structure:
 
 [Outro]
 
+  
+
 # HeartMuLa_ComfyUI
 ComfyUI Custom Node for HeartMuLa AI Music Generation and Transcript Text
 
@@ -55,7 +56,7 @@ https://github.com/HeartMuLa/heartlib
 
 How To Use this In Basic: https://youtu.be/F9LFAeUbBIs
 
-
+<h3># default CFG_SCALE = 1.5 !!!</h3>  
 
 <img width="846" height="518" alt="Screenshot_4" src="https://github.com/user-attachments/assets/2d8bfa16-80fa-4c05-83fe-aef3fd95f4da" />
 
