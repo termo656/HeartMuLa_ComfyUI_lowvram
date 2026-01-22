@@ -46,8 +46,6 @@ https://github.com/termo656/HeartMuLa_ComfyUI_lowvram/archive/refs/heads/main.zi
 
 **Step 2**
 
-cd /HeartMuLa_ComfyUI
-
 Go to the "python_embeded" folder
 
 Type "cmd" in the address bar
