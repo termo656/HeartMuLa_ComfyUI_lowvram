@@ -6,6 +6,44 @@ Sometimes style tags don't work, maybe because the model is compressed or it doe
 
 # CFG_SCALE = 3.0 - 5.0    !!!
 
+Style tags from the official website:
+
+
+warm, reflection, pop, Cafe
+
+R&B, Keyboard, Regret, drum machine, electric guitar, synthesizer, soft
+
+energetic, electronic, synthesizer, drum machine, self-discovery
+
+soft, Sad, Ballad, Longing
+
+meditation, faith, acoustic, peaceful
+
+wedding, Piano, Strings, acoustic guitar, pop, Romantic
+
+Sad, Regret, electric guitar, drums, Piano, emotional
+
+Walking, acoustic guitar, Strings, hope, hopeful
+
+synthesizer, drum machine, powerful, epic, Keyboard, electronic
+
+energetic, drums, driving, rock, electric guitar
+
+Cafe, Regret, Keyboard, synthesizer, drum machine, R&B, electric guitar
+
+Song structure:
+
+[Verse]
+
+[Chorus]
+
+[Verse]
+
+[Bridge]
+
+[Chorus]
+
+[Outro]
 
 # HeartMuLa_ComfyUI
 ComfyUI Custom Node for HeartMuLa AI Music Generation and Transcript Text
