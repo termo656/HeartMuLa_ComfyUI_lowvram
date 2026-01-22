@@ -1,8 +1,8 @@
 Experimental optimization for older 8GB cards (GTX 1070) [4bit,8bit]
 
-I was able to run it on the old card!
 
-Sometimes style tags don't work, possibly due to model compression.
+Sometimes style tags don't work, maybe because the model is compressed or it doesn't follow style tags well to begin with?!
+
 
 # CFG_SCALE = 3.0 - 5.0    !!!
 
@@ -41,6 +41,8 @@ https://github.com/ltdrdata/ComfyUI-Manager/raw/main/scripts/install-manager-for
 ...
 
 Unzip the node into a folder ComfyUI\custom_nodes\HeartMuLa_ComfyUI
+
+Rename folder HeartMuLa_ComfyUI_lowvram > HeartMuLa_ComfyUI
 
 https://github.com/termo656/HeartMuLa_ComfyUI_lowvram/archive/refs/heads/main.zip
 
