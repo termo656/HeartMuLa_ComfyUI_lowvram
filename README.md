@@ -1,10 +1,3 @@
-# This fork is outdated, use this one!!!
-[benjiyaya/HeartMuLa_ComfyUI](https://github.com/benjiyaya/HeartMuLa_ComfyUI)
-# This fork is outdated, use this one!!!
-
-
-
-
 
 Experimental optimization for older 8GB cards (GTX 1070) [4bit,8bit]
 
