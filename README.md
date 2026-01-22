@@ -35,6 +35,8 @@ Song structure:
 
 [Verse]
 
+[Prechorus]
+
 [Chorus]
 
 [Verse]
