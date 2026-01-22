@@ -4,7 +4,7 @@ I was able to run it on the old card!
 
 Sometimes style tags don't work, possibly due to model compression.
 
-# CFG_SCALE = 5.0    !!!
+# CFG_SCALE = 3.0 - 5.0    !!!
 
 
 # HeartMuLa_ComfyUI
