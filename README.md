@@ -1,8 +1,14 @@
+# This fork is outdated, use this one!!!
+[benjiyaya/HeartMuLa_ComfyUI](https://github.com/benjiyaya/HeartMuLa_ComfyUI)
+# This fork is outdated, use this one!!!
+
+
+
+
+
 Experimental optimization for older 8GB cards (GTX 1070) [4bit,8bit]
 
-
 Sometimes style tags don't work, maybe because the model is compressed or it doesn't follow style tags well to begin with?!
-
 
 # default CFG_SCALE = 1.5 
 
