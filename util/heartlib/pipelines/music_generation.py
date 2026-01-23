@@ -12,6 +12,9 @@ import gc
 import scipy.io.wavfile
 from transformers import BitsAndBytesConfig
 
+# !!! ВАЖНО: Импорт для проверки прерывания
+import comfy.model_management
+
 @dataclass
 class HeartMuLaGenConfig:
     text_bos_id: int = 128000
@@ -89,15 +92,9 @@ class HeartMuLaGenPipeline:
 
     def preprocess(self, inputs: Dict[str, Any], cfg_scale: float):
         self.load_heartmula()
-        
-        # Обработка тегов
-        tags_raw = inputs["tags"].lower()
-        print(f"Применяемые теги: {tags_raw}") # Отладка
-        
-        tags = tags_raw
+        tags = inputs["tags"].lower()
         if not tags.startswith("<tag>"): tags = f"<tag>{tags}"
         if not tags.endswith("</tag>"): tags = f"{tags}</tag>"
-        
         tags_ids = self.text_tokenizer.encode(tags).ids
         if tags_ids[0] != self.config.text_bos_id: tags_ids = [self.config.text_bos_id] + tags_ids
         if tags_ids[-1] != self.config.text_eos_id: tags_ids = tags_ids + [self.config.text_eos_id]
@@ -105,61 +102,33 @@ class HeartMuLaGenPipeline:
         muq_embed = torch.zeros([self._muq_dim], dtype=self.dtype, device=self.device)
         muq_idx = len(tags_ids)
 
-        # Обработка лирики
         lyrics = inputs["lyrics"].lower()
         lyrics_ids = self.text_tokenizer.encode(lyrics).ids
         if lyrics_ids[0] != self.config.text_bos_id: lyrics_ids = [self.config.text_bos_id] + lyrics_ids
         if lyrics_ids[-1] != self.config.text_eos_id: lyrics_ids = lyrics_ids + [self.config.text_eos_id]
 
-        # Создание тензоров
         prompt_len = len(tags_ids) + 1 + len(lyrics_ids)
-        
-        # Базовый тензор токенов (Условный, с тегами)
         tokens = torch.zeros([prompt_len, self._parallel_number], dtype=torch.long, device=self.device)
         tokens[: len(tags_ids), -1] = torch.tensor(tags_ids, device=self.device)
         tokens[len(tags_ids) + 1 :, -1] = torch.tensor(lyrics_ids, device=self.device)
-        
         tokens_mask = torch.zeros_like(tokens, dtype=torch.bool, device=self.device)
         tokens_mask[:, -1] = True
-        
-        pos = torch.arange(prompt_len, dtype=torch.long, device=self.device)
 
         bs_size = 2 if cfg_scale != 1.0 else 1
-
-        # --- ИСПРАВЛЕННАЯ ЛОГИКА CFG ---
-        if cfg_scale != 1.0:
-            # 1. Conditional (С тегами)
-            cond_tokens = tokens.unsqueeze(0)
-            
-            # 2. Unconditional (Без тегов - стираем их)
-            uncond_tokens = tokens.clone().unsqueeze(0)
-            
-            # Индексы тегов: от 1 (пропуск BOS) до len(tags_ids)-1 (пропуск EOS тега)
-            # Мы заменяем само содержимое тегов на empty_id (0), но сохраняем структуру <tag>...</tag> 
-            # и длину последовательности, чтобы muq_idx остался верным.
-            if len(tags_ids) > 2:
-                # Зануляем токены слов тегов, оставляя структурные токены
-                uncond_tokens[0, 1 : len(tags_ids)-1, -1] = self.config.empty_id
-            
-            final_tokens = torch.cat([cond_tokens, uncond_tokens], dim=0)
-            final_mask = torch.cat([tokens_mask.unsqueeze(0), tokens_mask.unsqueeze(0)], dim=0)
-            final_muq = torch.cat([muq_embed.unsqueeze(0), muq_embed.unsqueeze(0)], dim=0)
-            final_pos = torch.cat([pos.unsqueeze(0), pos.unsqueeze(0)], dim=0)
-        else:
-            final_tokens = tokens.unsqueeze(0)
-            final_mask = tokens_mask.unsqueeze(0)
-            final_muq = muq_embed.unsqueeze(0)
-            final_pos = pos.unsqueeze(0)
+        def _cfg_cat(t):
+            t = t.unsqueeze(0)
+            return torch.cat([t, t], dim=0) if cfg_scale != 1.0 else t
 
         return {
-            "tokens": final_tokens,
-            "tokens_mask": final_mask,
-            "muq_embed": final_muq,
+            "tokens": _cfg_cat(tokens),
+            "tokens_mask": _cfg_cat(tokens_mask),
+            "muq_embed": _cfg_cat(muq_embed),
             "muq_idx": [muq_idx] * bs_size,
-            "pos": final_pos,
+            "pos": _cfg_cat(torch.arange(prompt_len, dtype=torch.long, device=self.device)),
         }
 
-    def _forward(self, model_inputs: Dict[str, Any], max_audio_length_ms: int, temperature: float, topk: int, cfg_scale: float):
+    # Добавлен аргумент progress_callback
+    def _forward(self, model_inputs: Dict[str, Any], max_audio_length_ms: int, temperature: float, topk: int, cfg_scale: float, progress_callback=None):
         self.load_heartmula()
         self.model.setup_caches(2 if cfg_scale != 1.0 else 1)
         
@@ -177,7 +146,20 @@ class HeartMuLaGenPipeline:
             )
         frames.append(curr_token[0:1,])
 
-        for i in tqdm(range(max_audio_length_ms // 80), desc="Generating audio"):
+        total_steps = max_audio_length_ms // 80
+        
+        # Используем tqdm только для консоли, если не передан колбек
+        # Но лучше оставить и то и то
+        pbar = tqdm(range(total_steps), desc="Generating audio")
+        
+        for i in pbar:
+            # !!! ПРОВЕРКА НА ОТМЕНУ ГЕНЕРАЦИИ (Кнопка Cancel/Stop)
+            comfy.model_management.throw_exception_if_processing_interrupted()
+            
+            # !!! ОБНОВЛЕНИЕ ПРОГРЕССА В COMFYUI
+            if progress_callback:
+                progress_callback(i)
+
             padded_token = (torch.ones((curr_token.shape[0], self._parallel_number), device=self.device, dtype=torch.long) * self.config.empty_id)
             padded_token[:, :-1] = curr_token
             padded_token = padded_token.unsqueeze(1)
@@ -211,7 +193,6 @@ class HeartMuLaGenPipeline:
                     wav = self.audio_codec.detokenize(frames.to(self.device))
                 wav = wav.detach().cpu().float()
             
-
             if wav.dim() == 3 and wav.shape[0] == 1:
                 wav = wav.squeeze(0)
             if wav.dim() == 2 and wav.shape[0] < wav.shape[1]:
@@ -237,13 +218,19 @@ class HeartMuLaGenPipeline:
 
     def __call__(self, inputs: Dict[str, Any], **kwargs):
         keep_model_loaded = kwargs.get("keep_model_loaded", True)
-        # Увеличен стандартный cfg_scale для лучшего следования стилю
+        
+        # Извлекаем колбек прогресса из kwargs
+        progress_callback = kwargs.get("progress_callback", None)
+        
         model_inputs = self.preprocess(inputs, cfg_scale=kwargs.get("cfg_scale", 1.5))
+        
         frames = self._forward(model_inputs, 
                                max_audio_length_ms=kwargs.get("max_audio_length_ms", 120000),
                                temperature=kwargs.get("temperature", 1.0),
                                topk=kwargs.get("topk", 50),
-                               cfg_scale=kwargs.get("cfg_scale", 1.5))
+                               cfg_scale=kwargs.get("cfg_scale", 1.5),
+                               progress_callback=progress_callback) # Передаем в forward
+                               
         self.postprocess(frames, kwargs.get("save_path", "out.wav"), keep_model_loaded)
 
     @classmethod
