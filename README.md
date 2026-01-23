@@ -1,3 +1,4 @@
+👌<b>[23.01.2026] Update!!!</b> Bugs fixed: Progress bar display. Generation stopped.
 
 <h2><b>Experimental optimization for older 8GB cards (GTX 1070) [4bit,8bit]</b></h2>
 
