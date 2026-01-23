@@ -9,7 +9,9 @@ import folder_paths
 import logging
 import warnings
 from transformers import BitsAndBytesConfig
+import comfy.utils
 
+# Оптимизация памяти для PyTorch
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 logging.getLogger("transformers").setLevel(logging.ERROR)
@@ -47,35 +49,49 @@ class HeartMuLaModelManager:
         return cls._instance
 
     def get_gen_pipeline(self, version="3B", quantization="none"):
-        # Создаем уникальный ключ для кеша, чтобы не путать квантованную и неквантованную модель
         pipe_key = f"{version}_{quantization}"
         
-        if pipe_key not in self._gen_pipes:
-            from heartlib import HeartMuLaGenPipeline
-            
-            bnb_config = None
-            # Настройка квантования
-            if quantization == "4bit":
-                print(f"[HeartMuLa] Включение 4-bit (NF4) квантования для {version}...")
-                bnb_config = BitsAndBytesConfig(
-                    load_in_4bit=True,
-                    bnb_4bit_quant_type="nf4",
-                    bnb_4bit_use_double_quant=True,
-                    bnb_4bit_compute_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
-                )
-            elif quantization == "8bit":
-                print(f"[HeartMuLa] Включение 8-bit квантования для {version}...")
-                bnb_config = BitsAndBytesConfig(load_in_8bit=True)
+        # Проверка: если запрашиваемый пайплайн уже есть, возвращаем его
+        if pipe_key in self._gen_pipes:
+            return self._gen_pipes[pipe_key]
 
-            self._gen_pipes[pipe_key] = HeartMuLaGenPipeline.from_pretrained(
-                MODEL_BASE_DIR,
-                device=self._device,
-                dtype=torch.float16, # Используем float16 для лучшей совместимости с BNB
-                version=version,
-                bnb_config=bnb_config
-            )
+        # ВАЖНО: Если мы загружаем новую модель, нужно выгрузить ВСЕ старые, 
+        # чтобы не забить VRAM (так как мы храним только одну активную модель генерации)
+        if self._gen_pipes:
+            print(f"[HeartMuLa] Выгрузка старых моделей перед загрузкой {pipe_key}...")
+            keys_to_remove = list(self._gen_pipes.keys())
+            for k in keys_to_remove:
+                del self._gen_pipes[k]
             torch.cuda.empty_cache()
             gc.collect()
+
+        from heartlib import HeartMuLaGenPipeline
+        
+        bnb_config = None
+        # Настройка квантования
+        if quantization == "4bit":
+            print(f"[HeartMuLa] Включение 4-bit (NF4) квантования для {version}...")
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_use_double_quant=True, # Это ключевой параметр для экономии памяти
+                bnb_4bit_compute_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
+            )
+        elif quantization == "8bit":
+            print(f"[HeartMuLa] Включение 8-bit квантования для {version}...")
+            bnb_config = BitsAndBytesConfig(load_in_8bit=True)
+
+        print(f"[HeartMuLa] Загрузка модели {version} ({quantization})...")
+        self._gen_pipes[pipe_key] = HeartMuLaGenPipeline.from_pretrained(
+            MODEL_BASE_DIR,
+            device=self._device,
+            dtype=torch.float16, 
+            version=version,
+            bnb_config=bnb_config
+        )
+        torch.cuda.empty_cache()
+        gc.collect()
+        
         return self._gen_pipes[pipe_key]
 
     def get_transcribe_pipeline(self):
@@ -87,6 +103,13 @@ class HeartMuLaModelManager:
             torch.cuda.empty_cache()
             gc.collect()
         return self._transcribe_pipe
+    
+    # Метод для принудительной очистки
+    def unload_all(self):
+        self._gen_pipes.clear()
+        self._transcribe_pipe = None
+        torch.cuda.empty_cache()
+        gc.collect()
 
 class HeartMuLa_Generate:
     @classmethod
@@ -94,8 +117,9 @@ class HeartMuLa_Generate:
         return {
             "required": {
                 "lyrics": ("STRING", {"multiline": True, "placeholder": "[Verse]\n..."}),
-                "tags": ("STRING", {"multiline": True, "placeholder": "Drum and Bass, dub, uplifting, melodic, melancholy\n..."}),
+                "tags": ("STRING", {"multiline": True, "placeholder": "Drum and Bass, dub, uplifting..."}),
                 "version": (["3B", "7B"], {"default": "3B"}),
+                # Убрал 2bit, так как это невозможно
                 "quantization": (["none", "4bit", "8bit"], {"default": "4bit"}), 
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                 "max_audio_length_ms": ("INT", {"default": 240000, "min": 10000, "max": 600000, "step": 10000}),
@@ -117,15 +141,24 @@ class HeartMuLa_Generate:
         np.random.seed(seed & 0xFFFFFFFF)
 
         manager = HeartMuLaModelManager()
-        # Передаем параметр квантования в менеджер
-        pipe = manager.get_gen_pipeline(version, quantization)
-
-        output_dir = folder_paths.get_output_directory()
-        os.makedirs(output_dir, exist_ok=True)
-        filename = f"heartmula_gen_{uuid.uuid4().hex}.wav"
-        out_path = os.path.join(output_dir, filename)
-
+        
         try:
+            pipe = manager.get_gen_pipeline(version, quantization)
+
+            output_dir = folder_paths.get_output_directory()
+            os.makedirs(output_dir, exist_ok=True)
+            filename = f"heartmula_gen_{uuid.uuid4().hex}.wav"
+            out_path = os.path.join(output_dir, filename)
+
+            # !!! НАСТРОЙКА ПРОГРЕСС БАРА
+            # Примерное количество шагов (из твоего кода это ms // 80)
+            steps = max_audio_length_ms // 80
+            pbar = comfy.utils.ProgressBar(steps)
+
+            def update_progress(step):
+                # Обновляем бар на 1 шаг. step тут можно игнорировать или использовать для проверки
+                pbar.update(1)
+
             with torch.inference_mode():
                 pipe(
                     {"lyrics": lyrics, "tags": tags},
@@ -134,30 +167,32 @@ class HeartMuLa_Generate:
                     topk=topk,
                     temperature=temperature,
                     cfg_scale=cfg_scale,
-                    keep_model_loaded=keep_model_loaded
+                    keep_model_loaded=keep_model_loaded,
+                    progress_callback=update_progress # !!! ПЕРЕДАЕМ КОЛБЕК
                 )
         except Exception as e:
-            print(f"Generation failed: {e}")
+            print(f"Generation failed or cancelled: {e}")
+            manager.unload_all()
             raise e
         finally:
             if not keep_model_loaded:
-                # Очистка если не нужно держать в памяти
-                pipe_key = f"{version}_{quantization}"
-                if pipe_key in manager._gen_pipes:
-                    del manager._gen_pipes[pipe_key]
+                manager.unload_all()
+            
             torch.cuda.empty_cache()
             gc.collect()
 
-        waveform, sample_rate = torchaudio.load(out_path)
-        if waveform.ndim == 1:
-            waveform = waveform.unsqueeze(0) 
-        waveform = waveform.float()
-        if waveform.ndim == 2:
-            waveform = waveform.unsqueeze(0)
-            
-        audio_output = {"waveform": waveform, "sample_rate": sample_rate}
-        return (audio_output, out_path)
-
+        if os.path.exists(out_path):
+            waveform, sample_rate = torchaudio.load(out_path)
+            if waveform.ndim == 1:
+                waveform = waveform.unsqueeze(0) 
+            waveform = waveform.float()
+            if waveform.ndim == 2:
+                waveform = waveform.unsqueeze(0)
+            audio_output = {"waveform": waveform, "sample_rate": sample_rate}
+            return (audio_output, out_path)
+        else:
+            # Если файл не создан (например, отменили сразу), возвращаем пустой результат или ошибку
+            raise FileNotFoundError("Audio file was not generated (possibly cancelled).")
 
 class HeartMuLa_Transcribe:
     @classmethod
@@ -216,6 +251,7 @@ class HeartMuLa_Transcribe:
         finally:
             if os.path.exists(temp_path):
                 os.remove(temp_path)
+            # Транскрибатор обычно маленький, но можно тоже чистить
             torch.cuda.empty_cache()
             gc.collect()
 
