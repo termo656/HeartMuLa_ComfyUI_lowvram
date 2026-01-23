@@ -51,12 +51,10 @@ class HeartMuLaModelManager:
     def get_gen_pipeline(self, version="3B", quantization="none"):
         pipe_key = f"{version}_{quantization}"
         
-        # Проверка: если запрашиваемый пайплайн уже есть, возвращаем его
         if pipe_key in self._gen_pipes:
             return self._gen_pipes[pipe_key]
 
-        # ВАЖНО: Если мы загружаем новую модель, нужно выгрузить ВСЕ старые, 
-        # чтобы не забить VRAM (так как мы храним только одну активную модель генерации)
+
         if self._gen_pipes:
             print(f"[HeartMuLa] Выгрузка старых моделей перед загрузкой {pipe_key}...")
             keys_to_remove = list(self._gen_pipes.keys())
@@ -150,13 +148,11 @@ class HeartMuLa_Generate:
             filename = f"heartmula_gen_{uuid.uuid4().hex}.wav"
             out_path = os.path.join(output_dir, filename)
 
-            # !!! НАСТРОЙКА ПРОГРЕСС БАРА
-            # Примерное количество шагов (из твоего кода это ms // 80)
             steps = max_audio_length_ms // 80
             pbar = comfy.utils.ProgressBar(steps)
 
             def update_progress(step):
-                # Обновляем бар на 1 шаг. step тут можно игнорировать или использовать для проверки
+
                 pbar.update(1)
 
             with torch.inference_mode():
@@ -191,7 +187,6 @@ class HeartMuLa_Generate:
             audio_output = {"waveform": waveform, "sample_rate": sample_rate}
             return (audio_output, out_path)
         else:
-            # Если файл не создан (например, отменили сразу), возвращаем пустой результат или ошибку
             raise FileNotFoundError("Audio file was not generated (possibly cancelled).")
 
 class HeartMuLa_Transcribe:
@@ -269,3 +264,4 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 }
 
 __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
+
