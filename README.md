@@ -46,7 +46,11 @@ Cafe, Regret, Keyboard, synthesizer, drum machine, R&B, electric guitar
 
 [Outro]
 
-  
+<h3># default CFG_SCALE = 1.5 !!!</h3> 
+
+experiment with the parameters to achieve an acceptable result
+<img width="644" height="539" alt="666" src="https://github.com/user-attachments/assets/0879c675-4260-4945-ae4f-1d39ca04810d" />
+
 
 # HeartMuLa_ComfyUI
 ComfyUI Custom Node for HeartMuLa AI Music Generation and Transcript Text
@@ -57,9 +61,7 @@ https://github.com/HeartMuLa/heartlib
 
 How To Use this In Basic: https://youtu.be/F9LFAeUbBIs
 
-<h3># default CFG_SCALE = 1.5 !!!</h3>  
 
-<img width="846" height="518" alt="Screenshot_4" src="https://github.com/user-attachments/assets/2d8bfa16-80fa-4c05-83fe-aef3fd95f4da" />
 
 ------------------------------------------------------------
 
@@ -144,9 +146,11 @@ Use HuggingFace Cli download model weights.
 type :
 
 hf download HeartMuLa/HeartMuLaGen --local-dir ./HeartMuLa
-
+## To use version released on 20260123 (recommended)
+hf download HeartMuLa/HeartMuLa-RL-oss-3B-20260123 --local-dir ./HeartMuLa/HeartMuLa-oss-3B
+hf download HeartMuLa/HeartCodec-oss-20260123 --local-dir ./HeartMuLa/HeartCodec-oss
+-------------------------------------or--------------------------------------
 hf download benjiaiplayground/HeartMuLa-oss-3B-bf16 --local-dir ./HeartMuLa/HeartMuLa-oss-3B
-
 hf download benjiaiplayground/HeartCodec-oss-bf16 --local-dir ./HeartMuLa/HeartCodec-oss
 
 ------------------------------------------------------------
